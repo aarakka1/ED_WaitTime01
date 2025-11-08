@@ -103,7 +103,7 @@ pip --version
 
 ```bash
 # If using Git
-git clone <repository-url>
+git clone https://github.com/paxtaeo/diabetes_prediction_app.git
 cd diabetes_prediction_app
 
 # Or download and extract the ZIP file, then navigate to the folder
@@ -226,6 +226,156 @@ Open your web browser and navigate to:
 ### Stopping the Application
 
 Press `Ctrl+C` in the terminal to stop the server.
+
+### Deployment (Optional)
+
+This section demonstrates deploying your application to [Render](https://render.com), a cloud platform that offers free hosting for web applications. While Render is used as an example here, you can deploy to other platforms like Heroku, Railway, or AWS.
+
+#### Prerequisites for Deployment
+
+- A Render account ([sign up free](https://render.com))
+- Your Databricks token and MLflow endpoint URL
+- (Optional) A GitHub account if you want automatic redeployment on code changes
+
+#### Step-by-Step Deployment Guide
+
+**1. Create a New Web Service on Render**
+
+1. Log into your [Render Dashboard](https://dashboard.render.com)
+2. Click **"New +"** button in the top right
+3. Select **"Web Service"** from the dropdown menu
+
+**2. Connect Your Source Code**
+
+Choose one of the following options based on your needs:
+
+**Option A: Quick Deploy (Use Public Repository Directly)**
+
+Best for: Testing the application as-is without modifications
+
+- Select **"Public Git Repository"**
+- Enter: `https://github.com/paxtaeo/diabetes_prediction_app`
+- Click **"Continue"**
+
+⚠️ Note: With this option, you won't be able to customize the code. Any updates to the original repository will not automatically deploy to your service.
+
+**Option B: Fork and Deploy (Recommended for Development)**
+
+Best for: Making your own modifications and having automatic redeployment
+
+1. Go to `https://github.com/paxtaeo/diabetes_prediction_app`
+2. Click **"Fork"** button (top right) to create your own copy
+3. In Render, click **"Connect account"** to link your GitHub
+4. Select your forked repository (e.g., `your-username/diabetes_prediction_app`)
+5. Click **"Connect"**
+
+✅ Benefit: Any changes you push to your fork will automatically trigger a new deployment on Render.
+
+**3. Configure Your Service**
+
+Fill in the service settings:
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| **Name** | `diabetes-prediction-app` | Choose a unique name for your service |
+| **Region** | (Choose nearest) | Select the region closest to you |
+| **Branch** | `main` | The branch to deploy |
+| **Runtime** | `Python 3` | Auto-detected from your code |
+| **Build Command** | `pip install -r requirements.txt` | Auto-detected (leave as is) |
+| **Start Command** | `gunicorn diabetes_prediction_app:app` | **⚠️ Important: Enter this manually** |
+
+**4. Set Environment Variables**
+
+Click **"Advanced"** to expand the environment variables section, then add:
+
+| Key | Value | Required |
+|-----|-------|----------|
+| `DATABRICKS_TOKEN` | Your Databricks personal access token | ✅ Yes |
+| `MLFLOW_ENDPOINT_URL` | Your MLflow endpoint URL | ✅ Yes |
+| `FLASK_HOST` | `0.0.0.0` | Optional (default is fine) |
+| `FLASK_PORT` | `10000` | Optional (Render uses port 10000) |
+
+**How to get these values:**
+- **DATABRICKS_TOKEN**: Generated in Databricks workspace → User Settings → Developer → Access tokens
+- **MLFLOW_ENDPOINT_URL**: Found in Databricks → Serving → Your model endpoint → Copy URL
+
+⚠️ **Security Note**: These values are stored securely as environment variables and are never exposed in your code.
+
+**5. Choose Your Instance Type**
+
+For testing and learning purposes:
+- Select **"Free"** instance type
+- Free tier includes:
+  - 750 hours/month
+  - Automatic HTTPS
+  - Custom domains
+
+⚠️ **Cold Start Warning**: Free instances spin down after 15 minutes of inactivity. The first request after inactivity may take 30-60 seconds to respond as the service restarts. For production use, consider upgrading to a paid plan to keep your service always running.
+
+**6. Deploy**
+
+1. Click **"Create Web Service"** at the bottom
+2. Render will automatically:
+   - Clone the repository
+   - Install dependencies from `requirements.txt`
+   - Start your application using the specified command
+3. Monitor the deployment in the logs panel
+
+**7. Access Your Application**
+
+Once deployment succeeds (status shows "Live"):
+- Your app will be available at: `https://your-app-name.onrender.com`
+- Example: `https://diabetes-prediction-app.onrender.com`
+- Click the URL in the Render dashboard to open your application
+
+#### Updating Your Deployment
+
+**If you used Option A (Public Repository):**
+- Changes to the original repository will not automatically deploy
+- To update: Manually trigger a redeploy from Render dashboard → "Manual Deploy" → "Deploy latest commit"
+
+**If you used Option B (Forked Repository):**
+- Render automatically redeploys when you push to your connected branch:
+```bash
+# Make your changes
+git add .
+git commit -m "Update feature"
+git push origin main
+
+# Render automatically detects the push and redeploys
+```
+
+#### Deployment Troubleshooting
+
+**"Application failed to start"**
+- Check logs in Render dashboard
+- Verify `gunicorn` is in `requirements.txt`
+- Ensure Start Command is: `gunicorn diabetes_prediction_app:app`
+
+**"Environment variables not working"**
+- Verify variable names match exactly (case-sensitive)
+- After adding/changing variables, manually redeploy from Render dashboard
+
+**"Port binding error"**
+- Render automatically sets `PORT` environment variable
+- Your Flask app should use `os.environ.get('PORT', 4000)`
+- This is already configured in the application code
+
+**"Cold start takes too long"**
+- This is expected behavior on free tier
+- First request after idle wakes up the service
+- Consider upgrading to Starter plan ($7/month) for always-on service
+
+#### Alternative Deployment Platforms
+
+This application can also be deployed to:
+- **Heroku**: Similar process with Procfile
+- **Railway**: Simpler setup with automatic deployments
+- **AWS Elastic Beanstalk**: More control, requires AWS knowledge
+- **Google Cloud Run**: Container-based deployment
+- **Azure App Service**: Microsoft's cloud platform
+
+Each platform has different pricing and features. Render is recommended for beginners due to its simplicity and generous free tier.
 
 ## Usage
 
